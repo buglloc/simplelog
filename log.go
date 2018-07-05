@@ -52,5 +52,5 @@ func Crit(msg string, ctx ...interface{}) {
 }
 
 func Child(ctx ...interface{}) Logger {
-	logger.Child(ctx...)
+	return logger.Child(ctx...)
 }
