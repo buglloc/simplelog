@@ -2,42 +2,64 @@ package log
 
 import (
 	"os"
-
-	"gopkg.in/inconshreveable/log15.v2"
+	"sync"
+	"time"
 )
 
 type Logger struct {
-	logger log15.Logger
+	ctx []interface{}
+	mu  sync.Mutex
 }
 
+var (
+	maxLvl = InfoLevel
+)
+
 func NewLogger() Logger {
-	logger := log15.New()
-	logger.SetHandler(configFilterHandler(
-		log15.StreamHandler(os.Stderr, TextFormat()),
-	))
-	return Logger{logger: logger}
+	return Logger{
+		ctx: []interface{}{},
+	}
 }
 
 func (l Logger) Debug(msg string, ctx ...interface{}) {
-	l.logger.Debug(msg, ctx...)
+	l.write(msg, DebugLevel, ctx)
 }
 
 func (l Logger) Info(msg string, ctx ...interface{}) {
-	l.logger.Info(msg, ctx...)
+	l.write(msg, InfoLevel, ctx)
 }
 
 func (l Logger) Warn(msg string, ctx ...interface{}) {
-	l.logger.Warn(msg, ctx...)
+	l.write(msg, WarnLevel, ctx)
 }
 
 func (l Logger) Error(msg string, ctx ...interface{}) {
-	l.logger.Error(msg, ctx...)
+	l.write(msg, ErrorLevel, ctx)
 }
 
 func (l Logger) Crit(msg string, ctx ...interface{}) {
-	l.logger.Crit(msg, ctx...)
+	l.write(msg, CritLevel, ctx)
 }
 
 func (l Logger) Child(ctx ...interface{}) Logger {
-	return Logger{logger: l.logger.New(ctx...)}
+	return Logger{
+		ctx: newContext(l.ctx, ctx),
+	}
+}
+
+func (l *Logger) write(msg string, lvl Lvl, ctx []interface{}) {
+	if lvl > maxLvl {
+		return
+	}
+
+	record := Record{
+		Time: time.Now(),
+		Lvl:  lvl,
+		Msg:  msg,
+		Ctx:  newContext(l.ctx, ctx),
+	}
+
+	l.mu.Lock()
+	_, _ = os.Stderr.Write(FormatRecord(record))
+	l.mu.Unlock()
 }

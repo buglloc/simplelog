@@ -1,33 +1,10 @@
 package log
 
-import (
-	"gopkg.in/inconshreveable/log15.v2"
-)
-
 var (
-	logger Logger
-	maxLvl = InfoLevel
-)
-
-const (
-	CritLevel log15.Lvl = iota
-	ErrorLevel
-	WarnLevel
-	InfoLevel
-	DebugLevel
-)
-
-func init() {
 	logger = NewLogger()
-}
+)
 
-func configFilterHandler(h log15.Handler) log15.Handler {
-	return log15.FilterHandler(func(r *log15.Record) (pass bool) {
-		return r.Lvl <= maxLvl
-	}, h)
-}
-
-func SetLevel(level log15.Lvl) {
+func SetLevel(level Lvl) {
 	maxLvl = level
 }
 
